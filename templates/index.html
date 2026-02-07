@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FNCE102 Portfolio Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --darker: #0f172a;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+            --border: #475569;
+            --card-bg: rgba(30, 41, 59, 0.6);
+            --glow: rgba(59, 130, 246, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--light);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(59, 130, 246, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+            animation: shimmer 15s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card h2::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+
+        /* Profile Selector */
+        .profile-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .profile-btn {
+            padding: 12px 8px;
+            border: 2px solid var(--border);
+            background: transparent;
+            color: var(--light);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+        }
+
+        .profile-btn:hover {
+            border-color: var(--primary);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .profile-btn.active {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .profile-btn .name {
+            font-weight: 600;
+            display: block;
+        }
+
+        .profile-btn .type {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        /* ETF Selector */
+        .etf-category {
+            margin-bottom: 16px;
+        }
+
+        .etf-category h3 {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .etf-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .etf-chip {
+            padding: 8px 16px;
+            background: rgba(100, 116, 139, 0.15);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .etf-chip:hover {
+            background: rgba(59, 130, 246, 0.25);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .etf-chip.selected {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Allocation Controls */
+        .allocation-list {
+            margin-top: 20px;
+        }
+
+        .allocation-item {
+            display: grid;
+            grid-template-columns: 70px 1fr 60px 30px;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .allocation-item .ticker {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .allocation-item input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .allocation-item .weight {
+            text-align: right;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .allocation-item .remove {
+            background: var(--danger);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .total-weight {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-top: 12px;
+            font-weight: 600;
+        }
+
+        .total-weight.valid {
+            border: 2px solid var(--success);
+        }
+
+        .total-weight.invalid {
+            border: 2px solid var(--danger);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            margin-top: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::after {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.5);
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-group .btn {
+            margin-top: 0;
+        }
+
+        /* Results Section */
+        .results-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .metric-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .metric-card .label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+
+        .metric-card.portfolio .value {
+            color: var(--primary);
+        }
+
+        .metric-card.benchmark .value {
+            color: var(--secondary);
+        }
+
+        /* Charts */
+        .chart-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            margin-bottom: 16px;
+            color: var(--light);
+        }
+
+        /* Objectives */
+        .objectives-list {
+            margin-top: 16px;
+        }
+
+        .objective-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .objective-item .status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .objective-item .status.met {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .objective-item .status.not-met {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            color: var(--gray);
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        .comparison-table .portfolio-val {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .comparison-table .benchmark-val {
+            color: var(--secondary);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Custom Ticker Input */
+        .custom-ticker-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .custom-ticker-input input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--light);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .custom-ticker-input input::placeholder {
+            color: var(--gray);
+            text-transform: none;
+        }
+
+        .custom-ticker-input input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .add-ticker-btn {
+            padding: 10px 16px;
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-ticker-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .input-hint {
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-top: 6px;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-download:hover {
+            box-shadow: 0 5px 20px rgba(5, 150, 105, 0.4);
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>FNCE102 Portfolio Analyzer</h1>
+            <p>High-Net-Worth Individual Investment Portfolio Builder</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Left Panel: Portfolio Builder -->
+            <div class="left-panel">
+                <div class="card">
+                    <h2>Client Profile</h2>
+                    <div class="profile-selector">
+                        <button class="profile-btn" data-profile="conservative" onclick="selectProfile('conservative')">
+                            <span class="name">Richard Tan</span>
+                            <span class="type">Conservative</span>
+                        </button>
+                        <button class="profile-btn active" data-profile="balanced" onclick="selectProfile('balanced')">
+                            <span class="name">Sophia Lim</span>
+                            <span class="type">Balanced</span>
+                        </button>
+                        <button class="profile-btn" data-profile="aggressive" onclick="selectProfile('aggressive')">
+                            <span class="name">David Lee</span>
+                            <span class="type">Aggressive</span>
+                        </button>
+                    </div>
+
+                    <h2>Select Assets</h2>
+
+                    <div class="etf-category">
+                        <h3>US Equities</h3>
+                        <div class="etf-grid">
+                            <span class="etf-chip" data-ticker="VTI" onclick="toggleETF(this)">VTI</span>
+                            <span class="etf-chip" data-ticker="SPY" onclick="toggleETF(this)">SPY</span>
+                            <span class="etf-chip" data-ticker="QQQ" onclick="toggleETF(this)">QQQ</span>
+                            <span class="etf-chip" data-ticker="VGT" onclick="toggleETF(this)">VGT</span>
+                            <span class="etf-chip" data-ticker="VNQ" onclick="toggleETF(this)">VNQ</span>
+                            <span class="etf-chip" data-ticker="IWM" onclick="toggleETF(this)">IWM</span>
+                            <span class="etf-chip" data-ticker="XLF" onclick="toggleETF(this)">XLF</span>
+                            <span class="etf-chip" data-ticker="XLE" onclick="toggleETF(this)">XLE</span>
+                            <span class="etf-chip" data-ticker="XLV" onclick="toggleETF(this)">XLV</span>
+                        </div>
+                    </div>
+
+                    <div class="etf-category">
+                        <h3>International</h3>
+                        <div class="etf-grid">
+                            <span class="etf-chip" data-ticker="VEA" onclick="toggleETF(this)">VEA</span>
+                            <span class="etf-chip" data-ticker="VWO" onclick="toggleETF(this)">VWO</span>
+                            <span class="etf-chip" data-ticker="EFA" onclick="toggleETF(this)">EFA</span>
+                            <span class="etf-chip" data-ticker="EEM" onclick="toggleETF(this)">EEM</span>
+                        </div>
+                    </div>
+
+                    <div class="etf-category">
+                        <h3>Bonds</h3>
+                        <div class="etf-grid">
+                            <span class="etf-chip" data-ticker="BND" onclick="toggleETF(this)">BND</span>
+                            <span class="etf-chip" data-ticker="AGG" onclick="toggleETF(this)">AGG</span>
+                            <span class="etf-chip" data-ticker="LQD" onclick="toggleETF(this)">LQD</span>
+                            <span class="etf-chip" data-ticker="TIP" onclick="toggleETF(this)">TIP</span>
+                            <span class="etf-chip" data-ticker="SHY" onclick="toggleETF(this)">SHY</span>
+                            <span class="etf-chip" data-ticker="TLT" onclick="toggleETF(this)">TLT</span>
+                        </div>
+                    </div>
+
+                    <div class="etf-category">
+                        <h3>Alternatives</h3>
+                        <div class="etf-grid">
+                            <span class="etf-chip" data-ticker="GLD" onclick="toggleETF(this)">GLD</span>
+                            <span class="etf-chip" data-ticker="SLV" onclick="toggleETF(this)">SLV</span>
+                            <span class="etf-chip" data-ticker="DBC" onclick="toggleETF(this)">DBC</span>
+                        </div>
+                    </div>
+
+                    <div class="etf-category">
+                        <h3>Add Custom Ticker</h3>
+                        <div class="custom-ticker-input">
+                            <input type="text" id="customTickerInput" placeholder="Enter ticker (e.g., AAPL)"
+                                onkeypress="if(event.key==='Enter') addCustomTicker()">
+                            <button onclick="addCustomTicker()" class="add-ticker-btn">+ Add</button>
+                        </div>
+                        <p class="input-hint">Enter any stock or ETF symbol from Yahoo Finance</p>
+                    </div>
+
+                    <h2>Allocations</h2>
+                    <div class="allocation-list" id="allocationList">
+                        <p style="color: var(--gray); text-align: center; padding: 20px;">
+                            Click on ETFs above to add them to your portfolio
+                        </p>
+                    </div>
+
+                    <div class="total-weight" id="totalWeight">
+                        <span>Total Allocation</span>
+                        <span id="totalValue">0%</span>
+                    </div>
+
+                    <div class="btn-group" style="margin-top: 16px;">
+                        <button class="btn btn-danger" onclick="clearPortfolio()">
+                            Clear All
+                        </button>
+                        <button class="btn btn-primary" id="analyzeBtn" onclick="runAnalysis()" disabled>
+                            Run Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Results -->
+            <div class="right-panel">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Fetching data and calculating metrics...</p>
+                </div>
+
+                <div id="results" class="hidden">
+                    <div class="card">
+                        <h2>Performance Metrics</h2>
+                        <div class="metrics-grid" id="metricsGrid">
+                            <!-- Metrics will be inserted here -->
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <h2>Investment Objectives</h2>
+                        <div class="objectives-list" id="objectivesList">
+                            <!-- Objectives will be inserted here -->
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <h2>Portfolio vs Benchmark Comparison</h2>
+                        <table class="comparison-table" id="comparisonTable">
+                            <!-- Comparison will be inserted here -->
+                        </table>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <h2>Cumulative Returns</h2>
+                        <div class="chart-container">
+                            <canvas id="cumulativeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <h2>Annual Returns</h2>
+                        <div class="chart-container">
+                            <canvas id="annualChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px;">
+                        <h2>Export Data</h2>
+                        <p style="color: var(--gray); margin-bottom: 16px;">Download comprehensive analysis including
+                            efficient frontier, metrics, and all workings</p>
+                        <button class="btn btn-download" id="downloadBtn" onclick="downloadExcel()">
+                            Download Excel Report
+                        </button>
+                    </div>
+                </div>
+
+                <div id="placeholder" class="card" style="text-align: center; padding: 60px 20px;">
+                    <h2 style="margin-bottom: 16px;">Build Your Portfolio</h2>
+                    <p style="color: var(--gray);">
+                        1. Select a client profile<br>
+                        2. Choose your assets<br>
+                        3. Adjust the weightings<br>
+                        4. Click "Run Analysis"
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let selectedProfile = 'balanced';
+        let allocations = {};
+        let cumulativeChart = null;
+        let annualChart = null;
+
+        // Profile data
+        const suggestedAllocations = {
+            conservative: { BND: 0.30, LQD: 0.15, TIP: 0.10, VTI: 0.20, VEA: 0.10, GLD: 0.10, SHY: 0.05 },
+            balanced: { VTI: 0.25, VGT: 0.10, VEA: 0.15, VWO: 0.05, VNQ: 0.05, BND: 0.20, LQD: 0.10, GLD: 0.05, DBC: 0.05 },
+            aggressive: { VTI: 0.20, QQQ: 0.20, VGT: 0.15, VWO: 0.10, IWM: 0.10, VNQ: 0.05, GLD: 0.05, BND: 0.10, DBC: 0.05 }
+        };
+
+        function selectProfile(profile) {
+            selectedProfile = profile;
+
+            // Update buttons
+            document.querySelectorAll('.profile-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.profile === profile) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Load suggested allocations
+            allocations = { ...suggestedAllocations[profile] };
+
+            // Update UI
+            updateETFChips();
+            renderAllocations();
+        }
+
+        function updateETFChips() {
+            document.querySelectorAll('.etf-chip').forEach(chip => {
+                chip.classList.remove('selected');
+                if (allocations[chip.dataset.ticker]) {
+                    chip.classList.add('selected');
+                }
+            });
+        }
+
+        function toggleETF(chip) {
+            const ticker = chip.dataset.ticker;
+
+            if (allocations[ticker]) {
+                delete allocations[ticker];
+                chip.classList.remove('selected');
+            } else {
+                allocations[ticker] = 0.10; // Default 10%
+                chip.classList.add('selected');
+            }
+
+            renderAllocations();
+        }
+
+        function renderAllocations() {
+            const list = document.getElementById('allocationList');
+            const tickers = Object.keys(allocations);
+
+            if (tickers.length === 0) {
+                list.innerHTML = '<p style="color: var(--gray); text-align: center; padding: 20px;">Click on ETFs above to add them to your portfolio</p>';
+                updateTotal();
+                return;
+            }
+
+            list.innerHTML = tickers.map(ticker => `
+                <div class="allocation-item">
+                    <span class="ticker">${ticker}</span>
+                    <input type="range" min="1" max="50" value="${Math.round(allocations[ticker] * 100)}" 
+                           oninput="updateAllocation('${ticker}', this.value)">
+                    <span class="weight" id="weight-${ticker}">${Math.round(allocations[ticker] * 100)}%</span>
+                    <button class="remove" onclick="removeETF('${ticker}')">&times;</button>
+                </div>
+            `).join('');
+
+            updateTotal();
+        }
+
+        function updateAllocation(ticker, value) {
+            allocations[ticker] = parseInt(value) / 100;
+            document.getElementById(`weight-${ticker}`).textContent = value + '%';
+            updateTotal();
+        }
+
+        function removeETF(ticker) {
+            delete allocations[ticker];
+            document.querySelector(`.etf-chip[data-ticker="${ticker}"]`)?.classList.remove('selected');
+            renderAllocations();
+        }
+
+        function clearPortfolio() {
+            // Clear all allocations
+            allocations = {};
+
+            // Deselect all ETF chips
+            document.querySelectorAll('.etf-chip').forEach(chip => {
+                chip.classList.remove('selected');
+            });
+
+            // Re-render allocations
+            renderAllocations();
+        }
+
+        function addCustomTicker() {
+            const input = document.getElementById('customTickerInput');
+            const ticker = input.value.trim().toUpperCase();
+
+            if (!ticker) {
+                alert('Please enter a ticker symbol');
+                return;
+            }
+
+            if (ticker.length > 10) {
+                alert('Ticker symbol is too long');
+                return;
+            }
+
+            if (allocations[ticker]) {
+                alert(`${ticker} is already in your portfolio`);
+                input.value = '';
+                return;
+            }
+
+            // Add the ticker with default 10% allocation
+            allocations[ticker] = 0.10;
+            input.value = '';
+
+            renderAllocations();
+        }
+
+
+        function updateTotal() {
+            const total = Object.values(allocations).reduce((sum, val) => sum + val, 0);
+            const totalEl = document.getElementById('totalWeight');
+            const valueEl = document.getElementById('totalValue');
+            const btn = document.getElementById('analyzeBtn');
+
+            valueEl.textContent = Math.round(total * 100) + '%';
+
+            if (Math.abs(total - 1.0) < 0.02) {
+                totalEl.className = 'total-weight valid';
+                btn.disabled = false;
+            } else {
+                totalEl.className = 'total-weight invalid';
+                btn.disabled = true;
+            }
+        }
+
+        async function runAnalysis() {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const placeholder = document.getElementById('placeholder');
+
+            loading.classList.add('active');
+            results.classList.add('hidden');
+            placeholder.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allocations: allocations,
+                        profile: selectedProfile,
+                        start_date: '2009-01-01',
+                        end_date: '2025-01-31'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    loading.classList.remove('active');
+                    placeholder.classList.remove('hidden');
+                    return;
+                }
+
+                // Display results
+                displayResults(data);
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+                placeholder.classList.remove('hidden');
+            }
+
+            loading.classList.remove('active');
+        }
+
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            results.classList.remove('hidden');
+
+            // Metrics
+            const metricsGrid = document.getElementById('metricsGrid');
+            const keyMetrics = [
+                { key: 'Annualized Return', label: 'Return' },
+                { key: 'Annualized Volatility', label: 'Volatility' },
+                { key: 'Sharpe Ratio', label: 'Sharpe' },
+                { key: 'Maximum Drawdown', label: 'Max DD' },
+                { key: 'Sortino Ratio', label: 'Sortino' },
+                { key: 'Beta', label: 'Beta' }
+            ];
+
+            metricsGrid.innerHTML = keyMetrics.map(m => `
+                <div class="metric-card portfolio">
+                    <div class="value">${data.portfolio_metrics[m.key] || 'N/A'}</div>
+                    <div class="label">${m.label}</div>
+                </div>
+            `).join('');
+
+            // Objectives
+            const objectivesList = document.getElementById('objectivesList');
+            objectivesList.innerHTML = data.objectives.map(obj => `
+                <div class="objective-item">
+                    <span>${obj.name}</span>
+                    <span class="status ${obj.met ? 'met' : 'not-met'}">${obj.met ? 'MET' : 'NOT MET'}</span>
+                </div>
+            `).join('');
+
+            // Comparison table
+            const compTable = document.getElementById('comparisonTable');
+            const compareMetrics = ['Annualized Return', 'Annualized Volatility', 'Sharpe Ratio', 'Sortino Ratio', 'Maximum Drawdown', 'Beta'];
+            compTable.innerHTML = `
+                <thead>
+                    <tr><th>Metric</th><th>Portfolio</th><th>SPY Benchmark</th></tr>
+                </thead>
+                <tbody>
+                    ${compareMetrics.map(m => `
+                        <tr>
+                            <td>${m}</td>
+                            <td class="portfolio-val">${data.portfolio_metrics[m] || 'N/A'}</td>
+                            <td class="benchmark-val">${data.benchmark_metrics[m] || 'N/A'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+
+            // Charts
+            renderCumulativeChart(data.cumulative_returns);
+            renderAnnualChart(data.annual_returns);
+        }
+
+        function renderCumulativeChart(data) {
+            const ctx = document.getElementById('cumulativeChart').getContext('2d');
+
+            if (cumulativeChart) cumulativeChart.destroy();
+
+            cumulativeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: [
+                        {
+                            label: 'Portfolio',
+                            data: data.portfolio,
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            fill: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'SPY Benchmark',
+                            data: data.benchmark,
+                            borderColor: '#7c3aed',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: '#f8fafc' } },
+                        title: { display: true, text: 'Growth of $1 Investment', color: '#f8fafc' }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#64748b', maxTicksLimit: 12 } },
+                        y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,0.2)' } }
+                    }
+                }
+            });
+        }
+
+        function renderAnnualChart(data) {
+            const ctx = document.getElementById('annualChart').getContext('2d');
+
+            if (annualChart) annualChart.destroy();
+
+            annualChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.years,
+                    datasets: [
+                        {
+                            label: 'Portfolio',
+                            data: data.portfolio,
+                            backgroundColor: '#2563eb'
+                        },
+                        {
+                            label: 'SPY Benchmark',
+                            data: data.benchmark,
+                            backgroundColor: '#7c3aed'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: '#f8fafc' } },
+                        title: { display: true, text: 'Annual Returns (%)', color: '#f8fafc' }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#64748b' } },
+                        y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(100,116,139,0.2)' } }
+                    }
+                }
+            });
+        }
+
+        async function downloadExcel() {
+            const btn = document.getElementById('downloadBtn');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+
+            try {
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allocations: allocations,
+                        profile: selectedProfile
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    // Trigger download
+                    window.location.href = '/download/' + data.filename;
+                    alert('Excel report downloaded! Check your Downloads folder.');
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Download Excel Report';
+        }
+
+        // Initialize with balanced profile
+        selectProfile('balanced');
+    </script>
+</body>
+
+</html>
