@@ -21,6 +21,11 @@ from report import create_summary_report, export_to_excel
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
+# Create necessary directories for deployment (Render/Gunicorn)
+os.makedirs('output', exist_ok=True)
+os.makedirs('static', exist_ok=True)
+os.makedirs('templates', exist_ok=True)
+
 # Global cache for data
 DATA_CACHE = {}
 
