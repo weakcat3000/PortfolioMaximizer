@@ -387,9 +387,9 @@ def export():
             # Risk-free rate
             rf = 0.02
             
-            # Generate random portfolios for Monte Carlo (5,000 trials)
+            # Generate random portfolios for Monte Carlo (500 trials - optimized for cloud deployment)
             np.random.seed(42)
-            n_random = 5000
+            n_random = 500
             
             for _ in range(n_random):
                 weights = np.random.random(n_assets)
